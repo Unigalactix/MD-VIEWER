@@ -2,6 +2,9 @@
 
 A lightweight local Markdown viewer built with Streamlit. Navigate your file system, preview Markdown files, and render Mermaid diagrams with simple SVG download support.
 
+## Live Demo
+[View Live Demo](https://unigalactix-md-viewer-app-0ifgdy.streamlit.app/)
+
 ## Features
 
 - **File Explorer**: Navigate your local file system via the sidebar.
