@@ -10,9 +10,27 @@ def mermaid(code: str, height=500):
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
         mermaid.initialize({{ startOnLoad: true, theme: 'dark' }});
+        
+        function downloadSVG() {{
+            const svg = document.querySelector('.mermaid svg');
+            if (svg) {{
+                const data = (new XMLSerializer()).serializeToString(svg);
+                const blob = new Blob([data], {{type: 'image/svg+xml;charset=utf-8'}});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'diagram.svg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }}
+        }}
     </script>
-    <div class="mermaid">
-    {code}
+    <div style="position: relative;">
+        <button onclick="downloadSVG()" style="position: absolute; top: 0; right: 0; z-index: 10; opacity: 0.7; cursor: pointer; background: #333; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 12px;">⬇️ SVG</button>
+        <div class="mermaid">
+        {code}
+        </div>
     </div>
     """
     return components.html(html_code, height=height, scrolling=True)
