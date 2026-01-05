@@ -114,8 +114,17 @@ elif st.session_state.selected_file:
                 content = f.read()
         except Exception as e:
             st.error(f"Error reading file: {e}")
-    else:
-        st.error("File not found.")
+else:
+    st.info("👈 Select a file from the sidebar OR upload a file below to view.")
+    main_uploaded_file = st.file_uploader("Upload a local file", type=['md', 'txt', 'py', 'js', 'json', 'yaml', 'html', 'css'], key="main_uploader")
+    if main_uploaded_file is not None:
+        filename = main_uploaded_file.name
+        try:
+            stringio = io.StringIO(main_uploaded_file.getvalue().decode("utf-8"))
+            content = stringio.read()
+            uploaded_file = main_uploaded_file # Make it behave like the sidebar uploader for rendering checks
+        except Exception as e:
+            st.error(f"Error reading uploaded file: {e}")
 
 if content is not None:
     st.title(filename)
@@ -144,6 +153,3 @@ if content is not None:
                     st.markdown("```mermaid" + part)
     else:
         st.code(content)
-
-elif not uploaded_file and not st.session_state.selected_file:
-    st.info("👈 Select a file from the sidebar OR upload a file to view.")
