@@ -1,0 +1,13 @@
+{
+    "name": "md-viewer-app",
+    "version": "1.0.0",
+    "description": "Markdown Viewer App",
+    "scripts": {
+        "start": "concurrently \"npm run server\" \"npm run client\"",
+        "server": "cd server && npm start",
+        "client": "cd client && npm run dev"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.0"
+    }
+}
