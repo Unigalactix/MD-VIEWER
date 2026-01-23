@@ -1,1 +1,6 @@
 streamlit
+markdown
+xhtml2pdf
+python-docx
+beautifulsoup4
+requests

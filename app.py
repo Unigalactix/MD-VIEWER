@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import io
 import streamlit.components.v1 as components
+import requests
+import converter
 
 st.set_page_config(layout="wide", page_title="Markdown Viewer")
 
@@ -52,7 +54,12 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # 2. Local File System (Good for Local Use)
+    # 2. GitHub URL (Great for Remote Files)
+    github_url = st.text_input("Enter GitHub URL", placeholder="https://github.com/user/repo/blob/main/README.md")
+
+    st.markdown("---")
+    
+    # 3. Local File System (Good for Local Use)
     st.subheader("Local Filesystem")
     
     # Navigation controls
@@ -105,6 +112,24 @@ if uploaded_file is not None:
         content = stringio.read()
     except Exception as e:
         st.error(f"Error reading uploaded file: {e}")
+elif github_url:
+    # Logic to handle GitHub URLs
+    if "github.com" in github_url and "/blob/" in github_url:
+        # Convert blob URL to raw URL
+        raw_url = github_url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+    else:
+        raw_url = github_url
+    
+    filename = os.path.basename(github_url)
+    try:
+        response = requests.get(raw_url)
+        if response.status_code == 200:
+            content = response.text
+        else:
+            st.error(f"Failed to fetch file from GitHub. Status code: {response.status_code}")
+    except Exception as e:
+        st.error(f"Error fetching from GitHub: {e}")
+
 elif st.session_state.selected_file:
     file_path = st.session_state.selected_file
     filename = os.path.basename(file_path)
@@ -115,7 +140,7 @@ elif st.session_state.selected_file:
         except Exception as e:
             st.error(f"Error reading file: {e}")
 else:
-    st.info("👈 Select a file from the sidebar OR upload a file below to view.")
+    st.info("👈 Select a file, upload one, or enter a GitHub URL.")
     main_uploaded_file = st.file_uploader("Upload a local file", type=['md', 'txt', 'py', 'js', 'json', 'yaml', 'html', 'css'], key="main_uploader")
     if main_uploaded_file is not None:
         filename = main_uploaded_file.name
@@ -130,8 +155,63 @@ if content is not None:
     st.title(filename)
     if uploaded_file:
          st.caption("Source: Uploaded File")
+    elif github_url:
+         st.caption(f"Source: GitHub ({github_url})")
     else:
          st.caption(f"Path: {st.session_state.selected_file}")
+    
+    # --- Print Support ---
+    st.markdown("""
+        <style>
+        @media print {
+            [data-testid="stSidebar"] { display: none !important; }
+            [data-testid="stHeader"] { display: none !important; }
+            .stApp > header { display: none !important; }
+            button { display: none !important; }
+            .block-container { padding-top: 0 !important; }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Download Buttons
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        try:
+            pdf_file = converter.convert_to_pdf(content)
+            st.download_button(
+                label="Download PDF",
+                data=pdf_file,
+                file_name=f"{os.path.splitext(filename)[0]}.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.error(f"PDF Conversion Failed: {e}")
+
+    with col2:
+        try:
+            docx_file = converter.convert_to_docx(content)
+            st.download_button(
+                label="Download DOCX",
+                data=docx_file,
+                file_name=f"{os.path.splitext(filename)[0]}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        except Exception as e:
+             st.error(f"DOCX Conversion Failed: {e}")
+             
+    with col3:
+        if st.button("🖨️ Print View"):
+            components.html("""
+            <script>
+                try {
+                    window.parent.print();
+                } catch (e) {
+                    console.error("Print failed from iframe", e);
+                    alert("Unable to trigger print automatically. Please press Ctrl+P to print.");
+                }
+            </script>
+            """, height=0, width=0)
+
     st.markdown("---")
 
     if filename.endswith('.md'):
